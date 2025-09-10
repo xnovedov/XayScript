@@ -1,5 +1,6 @@
+-- esp.lua
 -- Подключаем меню через loadstring
-local Window = loadstring(game:HttpGet("https://raw.githubusercontent.com/ТВОЙ_РЕПО/rayfield_menu.lua"))()
+local Window = loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/rayfield_menu.lua"))()
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,7 +10,7 @@ local Camera = workspace.CurrentCamera
 
 local ESPStore = {}
 
--- Вспомогательная функция для создания Billboard
+-- Billboard GUI
 local function createTextLabel(parent,text,yOffset,color)
     local billboard = Instance.new("BillboardGui")
     billboard.Adornee = parent
@@ -44,7 +45,7 @@ local SkeletonConnections = {
     {"LeftLowerLeg","LeftFoot"},{"RightLowerLeg","RightFoot"}
 }
 
--- Создание ESP для персонажа
+-- Создание ESP
 local function setupCharacterESP(character, player)
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
     local hrp = character.HumanoidRootPart
@@ -122,19 +123,17 @@ local function trackPlayer(player)
     if player.Character then characterAdded(player.Character) end
 end
 
--- RenderStepped обновление
+-- RenderStepped обновление ESP
 RunService.RenderStepped:Connect(function()
     for _, esp in pairs(ESPStore) do
         local char = esp.Character
         local humanoid = esp.Humanoid
         if char and humanoid then
-            -- Health
             if esp.HealthTag then
                 local label = esp.HealthTag:FindFirstChildWhichIsA("TextLabel")
                 if label then label.Text = "HP: "..math.floor(humanoid.Health) end
                 esp.HealthTag.Enabled = Window.Flags.ESPHealth.Value
             end
-            -- Distance
             if esp.DistanceTag then
                 local label = esp.DistanceTag:FindFirstChildWhichIsA("TextLabel")
                 if label then
@@ -143,11 +142,9 @@ RunService.RenderStepped:Connect(function()
                 end
                 esp.DistanceTag.Enabled = Window.Flags.ESPDistance.Value
             end
-            -- Box
             if esp.Box then
                 esp.Box.Visible = Window.Flags.ESPBox.Value
             end
-            -- Skeleton
             for _, s in pairs(esp.Skeleton) do
                 if s.Beam then s.Beam.Enabled = Window.Flags.ESPSkeleton.Value end
             end
@@ -159,6 +156,5 @@ end)
 for _, p in pairs(Players:GetPlayers()) do
     if p~=LocalPlayer then trackPlayer(p) end
 end
-
 Players.PlayerAdded:Connect(function(p) if p~=LocalPlayer then trackPlayer(p) end end)
 Players.PlayerRemoving:Connect(function(p) if ESPStore[p] then ESPStore[p].Folder:Destroy() ESPStore[p]=nil end end)
