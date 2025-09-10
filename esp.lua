@@ -1,12 +1,24 @@
 -- esp.lua
-local Window = loadstring(game:HttpGet("https://github.com/xnovedov/XayScript/blob/main/rayfield_menu.lua"))()
+-- Подключаем меню
+local Window = loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/rayfield_menu.lua"))()
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-local CoreGui = game:GetService("CoreGui")
 
 local ESPStore = {}
+
+local SkeletonConnections = {
+    {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},
+    {"UpperTorso","LeftUpperArm"},{"UpperTorso","RightUpperArm"},
+    {"LeftUpperArm","LeftLowerArm"},{"RightUpperArm","RightLowerArm"},
+    {"LeftLowerArm","LeftHand"},{"RightLowerArm","RightHand"},
+    {"LowerTorso","LeftUpperLeg"},{"LowerTorso","RightUpperLeg"},
+    {"LeftUpperLeg","LeftLowerLeg"},{"RightUpperLeg","RightLowerLeg"},
+    {"LeftLowerLeg","LeftFoot"},{"RightLowerLeg","RightFoot"}
+}
 
 local function createTextLabel(parent, text, yOffset, color)
     local billboard = Instance.new("BillboardGui")
@@ -30,17 +42,6 @@ local function createTextLabel(parent, text, yOffset, color)
 
     return billboard
 end
-
--- Skeleton R15
-local SkeletonConnections = {
-    {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},
-    {"UpperTorso","LeftUpperArm"},{"UpperTorso","RightUpperArm"},
-    {"LeftUpperArm","LeftLowerArm"},{"RightUpperArm","RightLowerArm"},
-    {"LeftLowerArm","LeftHand"},{"RightLowerArm","RightHand"},
-    {"LowerTorso","LeftUpperLeg"},{"LowerTorso","RightUpperLeg"},
-    {"LeftUpperLeg","LeftLowerLeg"},{"RightUpperLeg","RightLowerLeg"},
-    {"LeftLowerLeg","LeftFoot"},{"RightLowerLeg","RightFoot"}
-}
 
 local function setupCharacterESP(character, player)
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
