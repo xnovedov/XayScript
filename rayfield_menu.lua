@@ -1,8 +1,8 @@
 local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/ArowixExploits/RayfieldUILibrary/main/source"))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Debug Menu",
-    LoadingTitle = "My Game",
+    Name = "XayScript",
+    LoadingTitle = "SCP RolePlay",
     LoadingSubtitle = "Debug Mode",
     ConfigurationSaving = {Enabled = true, FolderName = nil, FileName = "DebugConfig"}
 })
