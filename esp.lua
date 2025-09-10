@@ -1,128 +1,117 @@
--- Загружаем Rayfield
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+-- esp.lua
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 
--- Загружаем наш ESP модуль
-local ESP = loadstring(game:HttpGet('https://raw.githubusercontent.com/yourusername/yourrepo/main/esp.lua'))()
+local ESP = {
+    Enabled = false,
+    Objects = {}
+}
 
--- Создаем окно GUI
-local Window = Rayfield:CreateWindow({
-    Name = "ESP Menu",
-    LoadingTitle = "Загрузка ESP...",
-    LoadingSubtitle = "by YourName",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "ESPConfig",
-        FileName = "Settings"
-    }
-})
+function ESP:CreateESP(character, player)
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local hrp = character.HumanoidRootPart
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
 
--- Создаем вкладку для ESP
-local ESPTab = Window:CreateTab("ESP Настройки", 4483362458)
+    -- Метка с именем
+    local billboard = Instance.new("BillboardGui")
+    billboard.Adornee = hrp
+    billboard.Size = UDim2.new(0, 200, 0, 40)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = self.Enabled
+    billboard.Parent = CoreGui
 
--- Переключатель основного ESP
-ESPTab:CreateToggle({
-    Name = "Глобальный ESP",
-    CurrentValue = false,
-    Callback = function(Value)
-        ESP:ToggleGlobalESP(Value)
-    end,
-})
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 0, 20)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextColor3 = Color3.new(1, 1, 1)
+    nameLabel.TextSize = 14
+    nameLabel.Text = player.Name
+    nameLabel.Font = Enum.Font.RobotoMono
+    nameLabel.Parent = billboard
 
--- Отдельные переключатели для каждого типа ESP
-ESPTab:CreateToggle({
-    Name = "ESP Box",
-    CurrentValue = true,
-    Callback = function(Value)
-        ESP:ToggleESPType("Box", Value)
-    end,
-})
+    local healthLabel = Instance.new("TextLabel")
+    healthLabel.Size = UDim2.new(1, 0, 0, 20)
+    healthLabel.Position = UDim2.new(0, 0, 0, 20)
+    healthLabel.BackgroundTransparency = 1
+    healthLabel.TextColor3 = Color3.new(1, 0.5, 0.5)
+    nameLabel.TextSize = 12
+    healthLabel.Text = "HP: " .. math.floor(humanoid.Health)
+    healthLabel.Parent = billboard
 
-ESPTab:CreateToggle({
-    Name = "ESP Health",
-    CurrentValue = true,
-    Callback = function(Value)
-        ESP:ToggleESPType("Health", Value)
-    end,
-})
+    -- Бокс
+    local box = Instance.new("BoxHandleAdornment")
+    box.Adornee = hrp
+    box.AlwaysOnTop = true
+    box.Size = Vector3.new(4, 5, 2)
+    box.Transparency = 0.6
+    box.Color3 = Color3.new(1, 0, 0)
+    box.Visible = self.Enabled
+    box.Parent = CoreGui
 
-ESPTab:CreateToggle({
-    Name = "ESP Distance",
-    CurrentValue = true,
-    Callback = function(Value)
-        ESP:ToggleESPType("Distance", Value)
-    end,
-})
+    self.Objects[player] = {Billboard = billboard, Box = box, Character = character}
+end
 
-ESPTab:CreateToggle({
-    Name = "ESP Nick",
-    CurrentValue = true,
-    Callback = function(Value)
-        ESP:ToggleESPType("Nick", Value)
-    end,
-})
-
--- Настройки цвета
-ESPTab:CreateColorPicker({
-    Name = "Цвет боксов",
-    Color = Color3.fromRGB(255, 0, 0),
-    Callback = function(Color)
-        ESP:ChangeColor("Box", Color)
+function ESP:RemoveESP(player)
+    if self.Objects[player] then
+        self.Objects[player].Billboard:Destroy()
+        self.Objects[player].Box:Destroy()
+        self.Objects[player] = nil
     end
-})
+end
 
-ESPTab:CreateColorPicker({
-    Name = "Цвет здоровья",
-    Color = Color3.fromRGB(255, 100, 100),
-    Callback = function(Color)
-        ESP:ChangeColor("Health", Color)
+function ESP:ToggleGlobalESP(state)
+    self.Enabled = state
+    self:RefreshAllESP()
+end
+
+function ESP:RefreshAllESP()
+    for player in pairs(self.Objects) do
+        self:RemoveESP(player)
     end
-})
-
-ESPTab:CreateColorPicker({
-    Name = "Цвет дистанции",
-    Color = Color3.fromRGB(200, 200, 255),
-    Callback = function(Color)
-        ESP:ChangeColor("Distance", Color)
+    
+    if self.Enabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= Players.LocalPlayer and player.Character then
+                self:CreateESP(player.Character, player)
+            end
+        end
     end
-})
+end
 
-ESPTab:CreateColorPicker({
-    Name = "Цвет ника",
-    Color = Color3.fromRGB(255, 255, 255),
-    Callback = function(Color)
-        ESP:ChangeColor("Nick", Color)
-    end
-})
+-- Инициализация
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        if ESP.Enabled then
+            task.wait(1)
+            ESP:CreateESP(character, player)
+        end
+    end)
+end)
 
--- Слайдер для дистанции
-ESPTab:CreateSlider({
-    Name = "Макс. дистанция",
-    Range = {0, 1000},
-    Increment = 50,
-    Suffix = "studs",
-    CurrentValue = 500,
-    Callback = function(Value)
-        ESP:SetMaxDistance(Value)
-    end
-})
+Players.PlayerRemoving:Connect(function(player)
+    ESP:RemoveESP(player)
+end)
 
--- Кнопка для обновления ESP
-ESPTab:CreateButton({
-    Name = "Обновить ESP",
-    Callback = function()
-        ESP:RefreshAllESP()
-    end,
-})
-
--- Информационная секция
-ESPTab:CreateSection("Информация")
-ESPTab:CreateLabel("ESP загружен и готов к работе!")
-
--- Обновляем счетчик игроков
-spawn(function()
-    while task.wait(5) do
-        ESPTab:CreateLabel("Игроков отслеживается: " .. ESP:GetTrackedPlayers())
+-- Обновление здоровья
+RunService.RenderStepped:Connect(function()
+    if not ESP.Enabled then return end
+    
+    for player, data in pairs(ESP.Objects) do
+        if data.Character and data.Character.Parent then
+            local humanoid = data.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                local healthLabel = data.Billboard:FindFirstChildWhichIsA("TextLabel", true)
+                if healthLabel then
+                    healthLabel.Text = "HP: " .. math.floor(humanoid.Health)
+                end
+            end
+        end
     end
 end)
 
-print("ESP Menu loaded successfully!")
+return ESP
