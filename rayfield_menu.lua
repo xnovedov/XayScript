@@ -1,6 +1,6 @@
 debugX = true
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = loadstring(game:HttpGet('https://github.com/xnovedov/XayScript/blob/main/source.lua'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "Rayfield Example Window",
