@@ -1,6 +1,6 @@
 -- esp.lua
 -- Подключаем меню
-local Window = loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/rayfield_menu.lua"))()
+local Window = loadstring(game:HttpGet("https://github.com/xnovedov/XayScript/blob/main/rayfield_menu.lua"))()
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
