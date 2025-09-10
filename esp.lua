@@ -1,18 +1,14 @@
 -- esp.lua
--- Подключаем меню через loadstring
 local Window = loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/rayfield_menu.lua"))()
-
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local CoreGui = game:GetService("CoreGui")
 
 local ESPStore = {}
 
--- Billboard GUI
-local function createTextLabel(parent,text,yOffset,color)
+local function createTextLabel(parent, text, yOffset, color)
     local billboard = Instance.new("BillboardGui")
     billboard.Adornee = parent
     billboard.Size = UDim2.new(0,200,0,40)
@@ -35,7 +31,7 @@ local function createTextLabel(parent,text,yOffset,color)
     return billboard
 end
 
--- Skeleton для R15
+-- Skeleton R15
 local SkeletonConnections = {
     {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},
     {"UpperTorso","LeftUpperArm"},{"UpperTorso","RightUpperArm"},
@@ -46,7 +42,6 @@ local SkeletonConnections = {
     {"LeftLowerLeg","LeftFoot"},{"RightLowerLeg","RightFoot"}
 }
 
--- Создание ESP
 local function setupCharacterESP(character, player)
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
     local hrp = character.HumanoidRootPart
@@ -54,48 +49,38 @@ local function setupCharacterESP(character, player)
     if not humanoid then return nil end
 
     local espFolder = Instance.new("Folder")
-    espFolder.Name = player.Name .. "_ESP"
+    espFolder.Name = player.Name.."_ESP"
     espFolder.Parent = CoreGui
 
-    local box, nameTag, healthTag, distanceTag
-    local skeletonParts = {}
+    local box, healthTag, distanceTag, skeletonParts = nil, nil, nil, {}
 
-    -- Box
     if Window.Flags.ESPBox.Value then
         box = Instance.new("BoxHandleAdornment")
         box.Adornee = hrp
-        box.AlwaysOnTop = true
         box.Size = Vector3.new(4,5,2)
+        box.AlwaysOnTop = true
         box.Transparency = 0.6
         box.Color3 = Color3.fromRGB(255,0,0)
-        box.ZIndex = 1
         box.Parent = espFolder
     end
 
-    -- Name
-    nameTag = createTextLabel(hrp, player.Name, 3.5, Color3.fromRGB(255,255,255))
-    nameTag.Parent = espFolder
-
-    -- Health
     if Window.Flags.ESPHealth.Value then
-        healthTag = createTextLabel(hrp, "HP: "..math.floor(humanoid.Health), 3.0, Color3.fromRGB(255,100,100))
+        healthTag = createTextLabel(hrp, "HP:"..math.floor(humanoid.Health), 3, Color3.fromRGB(255,100,100))
         healthTag.Parent = espFolder
     end
 
-    -- Distance
     if Window.Flags.ESPDistance.Value then
         distanceTag = createTextLabel(hrp, "0m", 2.5, Color3.fromRGB(200,200,255))
         distanceTag.Parent = espFolder
     end
 
-    -- Skeleton
     if Window.Flags.ESPSkeleton.Value then
-        for _, connection in ipairs(SkeletonConnections) do
-            local part1 = character:FindFirstChild(connection[1])
-            local part2 = character:FindFirstChild(connection[2])
-            if part1 and part2 then
-                local att0 = Instance.new("Attachment", part1)
-                local att1 = Instance.new("Attachment", part2)
+        for _, conn in pairs(SkeletonConnections) do
+            local p1 = character:FindFirstChild(conn[1])
+            local p2 = character:FindFirstChild(conn[2])
+            if p1 and p2 then
+                local att0 = Instance.new("Attachment", p1)
+                local att1 = Instance.new("Attachment", p2)
                 local beam = Instance.new("Beam")
                 beam.Attachment0 = att0
                 beam.Attachment1 = att1
@@ -109,53 +94,33 @@ local function setupCharacterESP(character, player)
         end
     end
 
-    return {Folder=espFolder, Box=box, NameTag=nameTag, HealthTag=healthTag, DistanceTag=distanceTag, Skeleton=skeletonParts, Character=character, Humanoid=humanoid, Player=player}
+    return {Folder=espFolder, Box=box, HealthTag=healthTag, DistanceTag=distanceTag, Skeleton=skeletonParts, Character=character, Humanoid=humanoid}
 end
 
--- Трекинг игроков
 local function trackPlayer(player)
-    if player==LocalPlayer then return end
-    local function characterAdded(character)
+    if player == LocalPlayer then return end
+    local function charAdded(character)
         if ESPStore[player] then ESPStore[player].Folder:Destroy() ESPStore[player]=nil end
         task.wait(0.5)
         ESPStore[player] = setupCharacterESP(character, player)
     end
-    player.CharacterAdded:Connect(characterAdded)
-    if player.Character then characterAdded(player.Character) end
+    player.CharacterAdded:Connect(charAdded)
+    if player.Character then charAdded(player.Character) end
 end
 
--- RenderStepped обновление ESP
+for _,p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then trackPlayer(p) end
+end
+Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then trackPlayer(p) end end)
+Players.PlayerRemoving:Connect(function(p) if ESPStore[p] then ESPStore[p].Folder:Destroy() ESPStore[p]=nil end end)
+
 RunService.RenderStepped:Connect(function()
     for _, esp in pairs(ESPStore) do
-        local char = esp.Character
-        local humanoid = esp.Humanoid
-        if char and humanoid then
-            if esp.HealthTag then
-                local label = esp.HealthTag:FindFirstChildWhichIsA("TextLabel")
-                if label then label.Text = "HP: "..math.floor(humanoid.Health) end
-                esp.HealthTag.Enabled = Window.Flags.ESPHealth.Value
-            end
-            if esp.DistanceTag then
-                local label = esp.DistanceTag:FindFirstChildWhichIsA("TextLabel")
-                if label then
-                    local dist = (char.HumanoidRootPart.Position - Camera.CFrame.Position).Magnitude
-                    label.Text = string.format("%dm",math.floor(dist))
-                end
-                esp.DistanceTag.Enabled = Window.Flags.ESPDistance.Value
-            end
-            if esp.Box then
-                esp.Box.Visible = Window.Flags.ESPBox.Value
-            end
-            for _, s in pairs(esp.Skeleton) do
-                if s.Beam then s.Beam.Enabled = Window.Flags.ESPSkeleton.Value end
-            end
+        if esp.HealthTag then esp.HealthTag.Enabled = Window.Flags.ESPHealth.Value end
+        if esp.DistanceTag then esp.DistanceTag.Enabled = Window.Flags.ESPDistance.Value end
+        if esp.Box then esp.Box.Visible = Window.Flags.ESPBox.Value end
+        for _, s in pairs(esp.Skeleton) do
+            if s.Beam then s.Beam.Enabled = Window.Flags.ESPSkeleton.Value end
         end
     end
 end)
-
--- Инициализация игроков
-for _, p in pairs(Players:GetPlayers()) do
-    if p~=LocalPlayer then trackPlayer(p) end
-end
-Players.PlayerAdded:Connect(function(p) if p~=LocalPlayer then trackPlayer(p) end end)
-Players.PlayerRemoving:Connect(function(p) if ESPStore[p] then ESPStore[p].Folder:Destroy() ESPStore[p]=nil end end)
