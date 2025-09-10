@@ -1,16 +1,19 @@
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptrobloxxx/Rayfield1/refs/heads/main/Rayfield"))()
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/ArowixExploits/RayfieldUILibrary/main/source"))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "XayScript",
-    LoadingTitle = "SCP RolePlay",
-    LoadingSubtitle = "Debug Mode",
-    ConfigurationSaving = {Enabled = true, FolderName = nil, FileName = "DebugConfig"}
+    Name = "Debug Menu",
+    LoadingTitle = "Loading Debug Menu...",
+    LoadingSubtitle = "Please wait",
+    ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "DebugConfig" }
 })
 
-Window:CreateToggle({Name="ESP Box", Flag="ESPBox", CurrentValue=true})
-Window:CreateToggle({Name="ESP Health", Flag="ESPHealth", CurrentValue=true})
-Window:CreateToggle({Name="ESP Distance", Flag="ESPDistance", CurrentValue=true})
-Window:CreateToggle({Name="ESP Skeleton", Flag="ESPSkeleton", CurrentValue=true})
+local ESPTab = Window:CreateTab("ESP")
+local ESPSection = ESPTab:CreateSection("Visuals")
+
+ESPSection:CreateToggle({Name="ESP Box", Flag="ESPBox", CurrentValue=true})
+ESPSection:CreateToggle({Name="ESP Health", Flag="ESPHealth", CurrentValue=true})
+ESPSection:CreateToggle({Name="ESP Distance", Flag="ESPDistance", CurrentValue=true})
+ESPSection:CreateToggle({Name="ESP Skeleton", Flag="ESPSkeleton", CurrentValue=true})
 
 Window:CreateKeybind({
     Name = "Toggle Menu",
