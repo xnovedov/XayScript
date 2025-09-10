@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/esp.lua"))()
+loadstring(game:HttpGet("https://github.com/xnovedov/XayScript/blob/main/esp.lua"))()
