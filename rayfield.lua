@@ -1,10 +1,10 @@
--- Загружаем Rayfield
+
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
--- Загружаем наш ESP модуль
+
 local ESP = loadstring(game:HttpGet('https://raw.githubusercontent.com/yourusername/yourrepo/main/esp.lua'))()
 
--- Создаем окно GUI
+
 local Window = Rayfield:CreateWindow({
     Name = "ESP Menu",
     LoadingTitle = "Загрузка ESP...",
@@ -16,10 +16,9 @@ local Window = Rayfield:CreateWindow({
     }
 })
 
--- Создаем вкладку для ESP
+
 local ESPTab = Window:CreateTab("ESP Настройки", 4483362458)
 
--- Переключатель основного ESP
 ESPTab:CreateToggle({
     Name = "Глобальный ESP",
     CurrentValue = false,
@@ -28,7 +27,7 @@ ESPTab:CreateToggle({
     end,
 })
 
--- Отдельные переключатели для каждого типа ESP
+
 ESPTab:CreateToggle({
     Name = "ESP Box",
     CurrentValue = true,
@@ -61,7 +60,7 @@ ESPTab:CreateToggle({
     end,
 })
 
--- Кнопка для обновления ESP
+
 ESPTab:CreateButton({
     Name = "Обновить ESP",
     Callback = function()
@@ -69,7 +68,7 @@ ESPTab:CreateButton({
     end,
 })
 
--- Секция с настройками цвета
+
 local ColorSection = ESPTab:CreateSection("Настройки цвета")
 
 ESPTab:CreateColorPicker({
@@ -88,7 +87,7 @@ ESPTab:CreateColorPicker({
     end
 })
 
--- Слайдер для дистанции
+
 ESPTab:CreateSlider({
     Name = "Макс. дистанция",
     Range = {0, 1000},
@@ -100,7 +99,7 @@ ESPTab:CreateSlider({
     end
 })
 
--- Информационная секция
+
 ESPTab:CreateSection("Информация")
 ESPTab:CreateLabel("ESP загружен и готов к работе!")
 ESPTab:CreateLabel("Игроков отслеживается: " .. #ESP:GetTrackedPlayers())
