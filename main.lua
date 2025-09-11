@@ -3994,8 +3994,7 @@ task.delay(4, function()
 	end
 end)
 
-return RayfieldLibrary
-
+_G.Rayfield = Rayfield
 
 -- меню
 
