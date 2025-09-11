@@ -1,3 +1,4 @@
+
 --[[
 
 	Rayfield Interface Suite
@@ -9,6 +10,9 @@
 	Damian | Programming
 
 ]]
+local RayfieldLibrary = {}
+RayfieldLibrary.__index = RayfieldLibrary
+
 if debugX then
 	warn('Initialising Rayfield')
 end
