@@ -26,8 +26,8 @@ local Camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local espObjects, itemESP = {}, {}
 
-local UPDATE_INTERVAL = 0.07
-local MAX_DISTANCE = 2000
+local UPDATE_INTERVAL = 0.02 -- быстрее (≈50 fps)
+local MAX_DISTANCE = 3000
 local lastUpdate = 0
 
 local function createDrawing(type, props)
@@ -174,6 +174,7 @@ Tab:AddColorpicker({Name = "HP Gradient Start", Default = HPGradStart, Callback 
 Tab:AddColorpicker({Name = "HP Gradient End", Default = HPGradEnd, Callback = function(c) HPGradEnd = c end})
 Tab:AddToggle({Name = "Дистанция", Default = SHOW_DISTANCE, Callback = function(v) SHOW_DISTANCE = v end})
 Tab:AddColorpicker({Name = "Цвет дистанции", Default = DistColor, Callback = function(c) DistColor = c end})
+Tab:AddSlider({Name = "Макс дистанция ESP", Min = 100, Max = 5000, Default = MAX_DISTANCE, Color = Color3.fromRGB(255,255,255), Increment = 50, Callback = function(v) MAX_DISTANCE = v end})
 Tab:AddToggle({Name = "Трейсеры", Default = SHOW_TRACERS, Callback = function(v) SHOW_TRACERS = v end})
 Tab:AddColorpicker({Name = "Цвет трейсеров", Default = TracerColor, Callback = function(c) TracerColor = c end})
 Tab:AddToggle({Name = "Ники", Default = SHOW_NAME, Callback = function(v) SHOW_NAME = v end})
@@ -184,7 +185,7 @@ Tab:AddToggle({Name = "ESP оружия", Default = SHOW_WEAPON, Callback = func
 Tab:AddColorpicker({Name = "Цвет оружия", Default = WeaponColor, Callback = function(c) WeaponColor = c end})
 
 local About = Window:MakeTab({Name = "About", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-About:AddLabel("Version 0.4 Optimized")
+About:AddLabel("Version 0.5 Optimized+Fast")
 About:AddLabel("Developer: XayoriNovedov")
 About:AddLabel("t.me/XayNovTeam")
 
