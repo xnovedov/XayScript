@@ -184,10 +184,10 @@ Tab:AddColorpicker({Name = "Цвет ролей", Default = RoleColor, Callback 
 Tab:AddToggle({Name = "ESP оружия", Default = SHOW_WEAPON, Callback = function(v) SHOW_WEAPON = v end})
 Tab:AddColorpicker({Name = "Цвет оружия", Default = WeaponColor, Callback = function(c) WeaponColor = c end})
 
-local Tab = Window:MakeTab({Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+local About = Window:MakeTab({Name = "About", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 
-OrionLib:MakeLabel({Text = "Version 0.2", Tab = Tab})
-OrionLib:MakeLabel({Text = "Developer: XayoriNovedov", Tab = Tab})
-OrionLib:MakeLabel({Text = "t.me/XayNovTeam", Tab = Tab})
+About:AddLabel("Version 0.2")
+About:AddLabel("Developer: XayoriNovedov")
+About:AddLabel("t.me/XayNovTeam")
 
 OrionLib:Init()
