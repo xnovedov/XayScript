@@ -3994,8 +3994,9 @@ task.delay(4, function()
 	end
 end)
 
-_G.Rayfield = Rayfield
-
+_G.Rayfield = RayfieldLibrary
+print("Rayfield object:", _G.Rayfield)
+print("CreateWindow exists:", _G.Rayfield.CreateWindow)
 -- меню
 
 local Rayfield = _G.Rayfield -- после вставки source.lua объект уже будет доступен
