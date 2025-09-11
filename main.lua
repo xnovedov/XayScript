@@ -49,6 +49,11 @@ local function addESP(player)
         Role = createDrawing("Text", {Size = 14, Center = true, Outline = true, Visible = false}),
     }
     espObjects[player] = objects
+
+    player.CharacterAdded:Connect(function()
+        espObjects[player] = nil
+        addESP(player)
+    end)
 end
 
 local function removeESP(player)
@@ -86,12 +91,14 @@ RunService.RenderStepped:Connect(function()
                 local height = 3 * scale
                 local x = pos.X - width / 2
                 local y = pos.Y - height / 2
+
                 objects.Box.Visible = SHOW_BOX
                 if SHOW_BOX then
                     objects.Box.Size = Vector2.new(width, height)
                     objects.Box.Position = Vector2.new(x, y)
                     objects.Box.Color = BoxColor
                 end
+
                 objects.Health.Visible = SHOW_HEALTH
                 objects.HealthBG.Visible = SHOW_HEALTH
                 if SHOW_HEALTH then
@@ -106,25 +113,33 @@ RunService.RenderStepped:Connect(function()
                         objects.Health.Color = HPColor
                     end
                 end
+
                 objects.Distance.Visible = SHOW_DISTANCE
                 if SHOW_DISTANCE then
-                    local dist = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")) and (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude or 0
+                    local dist = 0
+                    local lchr = LocalPlayer.Character
+                    if lchr and lchr:FindFirstChild("HumanoidRootPart") then
+                        dist = (lchr.HumanoidRootPart.Position - hrp.Position).Magnitude
+                    end
                     objects.Distance.Position = Vector2.new(pos.X, y + height + 15)
                     objects.Distance.Text = string.format("[%dm]", math.floor(dist))
                     objects.Distance.Color = DistColor
                 end
+
                 objects.Tracer.Visible = SHOW_TRACERS
                 if SHOW_TRACERS then
                     objects.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
                     objects.Tracer.To = Vector2.new(pos.X, pos.Y)
                     objects.Tracer.Color = TracerColor
                 end
+
                 objects.Name.Visible = SHOW_NAME
                 if SHOW_NAME then
                     objects.Name.Position = Vector2.new(pos.X, y - 15)
                     objects.Name.Text = player.Name
                     objects.Name.Color = NameColor
                 end
+
                 objects.Role.Visible = SHOW_ROLE
                 if SHOW_ROLE then
                     local role = player.Team and player.Team.Name or "No Team"
@@ -185,8 +200,7 @@ Tab:AddToggle({Name = "ESP оружия", Default = SHOW_WEAPON, Callback = func
 Tab:AddColorpicker({Name = "Цвет оружия", Default = WeaponColor, Callback = function(c) WeaponColor = c end})
 
 local About = Window:MakeTab({Name = "About", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-
-About:AddLabel("Version 0.2")
+About:AddLabel("Version 0.3")
 About:AddLabel("Developer: XayoriNovedov")
 About:AddLabel("t.me/XayNovTeam")
 
