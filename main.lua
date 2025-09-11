@@ -162,7 +162,7 @@ Players.PlayerRemoving:Connect(removeESP)
 workspace.DescendantAdded:Connect(function(obj) if obj.Name == "GunDrop" then addItemESP(obj) end end)
 workspace.DescendantRemoving:Connect(function(obj) if itemESP[obj] then removeItemESP(obj) end end)
 
-local Window = OrionLib:MakeWindow({Name = "ESP Menu", HidePremium = false, SaveConfig = false, IntroEnabled = false})
+local Window = OrionLib:MakeWindow({Name = "XayScript Universal", HidePremium = true, SaveConfig = false, IntroEnabled = true})
 local Tab = Window:MakeTab({Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 
 Tab:AddToggle({Name = "Включить ESP", Default = ESP_ENABLED, Callback = function(v) ESP_ENABLED = v end})
@@ -183,5 +183,11 @@ Tab:AddToggle({Name = "Роли", Default = SHOW_ROLE, Callback = function(v) SH
 Tab:AddColorpicker({Name = "Цвет ролей", Default = RoleColor, Callback = function(c) RoleColor = c end})
 Tab:AddToggle({Name = "ESP оружия", Default = SHOW_WEAPON, Callback = function(v) SHOW_WEAPON = v end})
 Tab:AddColorpicker({Name = "Цвет оружия", Default = WeaponColor, Callback = function(c) WeaponColor = c end})
+
+local Tab = Window:MakeTab({Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+
+OrionLib:MakeLabel({Text = "Version 0.2", Tab = Tab})
+OrionLib:MakeLabel({Text = "Developer: XayoriNovedov", Tab = Tab})
+OrionLib:MakeLabel({Text = "t.me/XayNovTeam", Tab = Tab})
 
 OrionLib:Init()
