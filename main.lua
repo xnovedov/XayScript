@@ -24,8 +24,11 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
-local espObjects = {}
-local itemESP = {}
+local espObjects, itemESP = {}, {}
+
+local UPDATE_INTERVAL = 0.07
+local MAX_DISTANCE = 2000
+local lastUpdate = 0
 
 local function createDrawing(type, props)
     local obj = Drawing.new(type)
@@ -42,18 +45,11 @@ local function addESP(player)
     local objects = {
         Box = createDrawing("Square", {Thickness = 1, Filled = false, Visible = false}),
         Health = createDrawing("Square", {Thickness = 1, Filled = true, Visible = false}),
-        HealthBG = createDrawing("Square", {Thickness = 1, Filled = true, Color = Color3.fromRGB(40, 40, 40), Visible = false}),
-        Distance = createDrawing("Text", {Size = 16, Center = true, Outline = true, Visible = false}),
+        HealthBG = createDrawing("Square", {Thickness = 1, Filled = true, Color = Color3.fromRGB(40,40,40), Visible = false}),
+        Info = createDrawing("Text", {Size = 16, Center = true, Outline = true, Visible = false}),
         Tracer = createDrawing("Line", {Thickness = 1, Visible = false}),
-        Name = createDrawing("Text", {Size = 16, Center = true, Outline = true, Visible = false}),
-        Role = createDrawing("Text", {Size = 14, Center = true, Outline = true, Visible = false}),
     }
     espObjects[player] = objects
-
-    player.CharacterAdded:Connect(function()
-        espObjects[player] = nil
-        addESP(player)
-    end)
 end
 
 local function removeESP(player)
@@ -73,24 +69,31 @@ local function removeItemESP(item)
     if itemESP[item] then itemESP[item]:Remove() itemESP[item] = nil end
 end
 
-RunService.RenderStepped:Connect(function()
+RunService.Heartbeat:Connect(function(dt)
+    lastUpdate = lastUpdate + dt
+    if lastUpdate < UPDATE_INTERVAL then return end
+    lastUpdate = 0
+
     if not ESP_ENABLED then
         for _, objects in pairs(espObjects) do for _, obj in pairs(objects) do obj.Visible = false end end
         for _, obj in pairs(itemESP) do obj.Visible = false end
         return
     end
+
     for player, objects in pairs(espObjects) do
         local character = player.Character
         local hrp = character and character:FindFirstChild("HumanoidRootPart")
         local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
         if hrp and humanoid and humanoid.Health > 0 then
             local pos, vis = Camera:WorldToViewportPoint(hrp.Position)
-            if vis then
+            local lchr = LocalPlayer.Character
+            local dist = (lchr and lchr:FindFirstChild("HumanoidRootPart")) and (lchr.HumanoidRootPart.Position - hrp.Position).Magnitude or 0
+
+            if vis and dist < MAX_DISTANCE then
                 local scale = 2000 / pos.Z
-                local width = 2 * scale
-                local height = 3 * scale
-                local x = pos.X - width / 2
-                local y = pos.Y - height / 2
+                local width, height = 2 * scale, 3 * scale
+                local x, y = pos.X - width/2, pos.Y - height/2
 
                 objects.Box.Visible = SHOW_BOX
                 if SHOW_BOX then
@@ -107,45 +110,25 @@ RunService.RenderStepped:Connect(function()
                     objects.HealthBG.Size = Vector2.new(4, height)
                     objects.Health.Position = Vector2.new(x - 6, y + height * (1 - ratio))
                     objects.Health.Size = Vector2.new(4, height * ratio)
-                    if SHOW_GRADIENT_HEALTH then
-                        objects.Health.Color = lerpColor(HPGradStart, HPGradEnd, ratio)
-                    else
-                        objects.Health.Color = HPColor
-                    end
-                end
-
-                objects.Distance.Visible = SHOW_DISTANCE
-                if SHOW_DISTANCE then
-                    local dist = 0
-                    local lchr = LocalPlayer.Character
-                    if lchr and lchr:FindFirstChild("HumanoidRootPart") then
-                        dist = (lchr.HumanoidRootPart.Position - hrp.Position).Magnitude
-                    end
-                    objects.Distance.Position = Vector2.new(pos.X, y + height + 15)
-                    objects.Distance.Text = string.format("[%dm]", math.floor(dist))
-                    objects.Distance.Color = DistColor
+                    objects.Health.Color = SHOW_GRADIENT_HEALTH and lerpColor(HPGradStart, HPGradEnd, ratio) or HPColor
                 end
 
                 objects.Tracer.Visible = SHOW_TRACERS
                 if SHOW_TRACERS then
-                    objects.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    objects.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
                     objects.Tracer.To = Vector2.new(pos.X, pos.Y)
                     objects.Tracer.Color = TracerColor
                 end
 
-                objects.Name.Visible = SHOW_NAME
-                if SHOW_NAME then
-                    objects.Name.Position = Vector2.new(pos.X, y - 15)
-                    objects.Name.Text = player.Name
-                    objects.Name.Color = NameColor
-                end
-
-                objects.Role.Visible = SHOW_ROLE
-                if SHOW_ROLE then
-                    local role = player.Team and player.Team.Name or "No Team"
-                    objects.Role.Position = Vector2.new(pos.X, y - 30)
-                    objects.Role.Text = "["..role.."]"
-                    objects.Role.Color = RoleColor
+                objects.Info.Visible = (SHOW_NAME or SHOW_ROLE or SHOW_DISTANCE)
+                if objects.Info.Visible then
+                    local info = {}
+                    if SHOW_NAME then table.insert(info, player.Name) end
+                    if SHOW_ROLE then table.insert(info, "["..(player.Team and player.Team.Name or "No Team").."]") end
+                    if SHOW_DISTANCE then table.insert(info, "["..math.floor(dist).."m]") end
+                    objects.Info.Text = table.concat(info, " ")
+                    objects.Info.Position = Vector2.new(pos.X, y - 15)
+                    objects.Info.Color = NameColor
                 end
             else
                 for _, obj in pairs(objects) do obj.Visible = false end
@@ -154,6 +137,7 @@ RunService.RenderStepped:Connect(function()
             for _, obj in pairs(objects) do obj.Visible = false end
         end
     end
+
     for item, text in pairs(itemESP) do
         if item and item.Parent then
             local pos, vis = Camera:WorldToViewportPoint(item.Position)
@@ -200,7 +184,7 @@ Tab:AddToggle({Name = "ESP оружия", Default = SHOW_WEAPON, Callback = func
 Tab:AddColorpicker({Name = "Цвет оружия", Default = WeaponColor, Callback = function(c) WeaponColor = c end})
 
 local About = Window:MakeTab({Name = "About", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-About:AddLabel("Version 0.3")
+About:AddLabel("Version 0.4 Optimized")
 About:AddLabel("Developer: XayoriNovedov")
 About:AddLabel("t.me/XayNovTeam")
 
