@@ -1,164 +1,224 @@
--- OrionLib
-local success, OrionLib = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/darkkcontrol/Roblox-Orion-UI-Libary-OP-UI-LIBARY-/main/source"))()
-end)
+-- Подключаем OrionLib
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/source"))()
 
-if not success or type(OrionLib) ~= "table" then
-    warn("Не удалось загрузить OrionLib")
-    return
+-- ========== КОНФИГ ==========
+local ESP_ENABLED = false
+local SHOW_BOX = false
+local SHOW_HEALTH = false
+local SHOW_GRADIENT_HEALTH = false
+local SHOW_DISTANCE = false
+local SHOW_TRACERS = false
+local SHOW_WEAPON = false
+-- ============================
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local espObjects = {}
+local itemESP = {}
+
+-- ========= ХЕЛПЕРЫ =========
+local function createDrawing(type, props)
+    local obj = Drawing.new(type)
+    for i, v in pairs(props) do
+        obj[i] = v
+    end
+    return obj
 end
 
--- Настройки ESP
-local ESPSettings = {
-    Enabled = false,
-    ShowBox = false,
-    ShowHealth = false,
-    GradientHealth = false,
-    ShowDistance = false,
-    ShowTracers = false,
-
-    Colors = {
-        Box = Color3.fromRGB(255,255,255),
-        Tracer = Color3.fromRGB(255,255,255),
-        Distance = Color3.fromRGB(255,255,255),
-        HP = Color3.fromRGB(0,255,0),
-        HPGradStart = Color3.fromRGB(0,255,0),
-        HPGradEnd = Color3.fromRGB(255,0,0),
-    },
-    MaxDistance = 500
-}
-
--- Хелпер: интерполяция градиента HP
-local function LerpColor(c1,c2,t)
+local function lerpColor(c1, c2, t)
     return Color3.new(
-        c1.R + (c2.R-c1.R)*t,
-        c1.G + (c2.G-c1.G)*t,
-        c1.B + (c2.B-c1.B)*t
+        c1.R + (c2.R - c1.R) * t,
+        c1.G + (c2.G - c1.G) * t,
+        c1.B + (c2.B - c1.B) * t
     )
 end
 
--- UI
-local Window = OrionLib:MakeWindow({Name="ESP Menu",HidePremium=false,SaveConfig=false,ConfigFolder="ESPMenu"})
-local Tab = Window:MakeTab({Name="ESP",Icon="rbxassetid://4483345998",PremiumOnly=false})
+-- ========= ESP ДЛЯ ИГРОКОВ =========
+local function addESP(player)
+    if player == LocalPlayer then return end
+    if espObjects[player] then return end
 
-Tab:AddToggle({Name="ESP",Default=false,Callback=function(v) ESPSettings.Enabled=v end})
-Tab:AddToggle({Name="Боксы",Default=false,Callback=function(v) ESPSettings.ShowBox=ESPSettings.Enabled and v or false end})
-Tab:AddColorpicker({Name="Цвет боксов",Default=ESPSettings.Colors.Box,Callback=function(c) if ESPSettings.Enabled and ESPSettings.ShowBox then ESPSettings.Colors.Box=c end end})
-Tab:AddToggle({Name="HP бар",Default=false,Callback=function(v) ESPSettings.ShowHealth=ESPSettings.Enabled and v or false end})
-Tab:AddToggle({Name="Градиент HP",Default=false,Callback=function(v) ESPSettings.GradientHealth=(ESPSettings.Enabled and ESPSettings.ShowHealth) and v or false end})
-Tab:AddColorpicker({Name="HP Цвет",Default=ESPSettings.Colors.HP,Callback=function(c) if ESPSettings.Enabled and ESPSettings.ShowHealth and not ESPSettings.GradientHealth then ESPSettings.Colors.HP=c end end})
-Tab:AddColorpicker({Name="HP Gradient Start",Default=ESPSettings.Colors.HPGradStart,Callback=function(c) if ESPSettings.Enabled and ESPSettings.GradientHealth then ESPSettings.Colors.HPGradStart=c end end})
-Tab:AddColorpicker({Name="HP Gradient End",Default=ESPSettings.Colors.HPGradEnd,Callback=function(c) if ESPSettings.Enabled and ESPSettings.GradientHealth then ESPSettings.Colors.HPGradEnd=c end end})
-Tab:AddToggle({Name="Дистанция",Default=false,Callback=function(v) ESPSettings.ShowDistance=ESPSettings.Enabled and v or false end})
-Tab:AddColorpicker({Name="Цвет дистанции",Default=ESPSettings.Colors.Distance,Callback=function(c) if ESPSettings.Enabled and ESPSettings.ShowDistance then ESPSettings.Colors.Distance=c end end})
-Tab:AddToggle({Name="Трейсеры",Default=false,Callback=function(v) ESPSettings.ShowTracers=ESPSettings.Enabled and v or false end})
-Tab:AddColorpicker({Name="Цвет трейсеров",Default=ESPSettings.Colors.Tracer,Callback=function(c) if ESPSettings.Enabled and ESPSettings.ShowTracers then ESPSettings.Colors.Tracer=c end end})
-
--- ESP рендер
-local camera = workspace.CurrentCamera
-local players = game:GetService("Players")
-local localPlayer = players.LocalPlayer
-local runService = game:GetService("RunService")
-
--- Таблица объектов
-local drawings = {}
-
-local function createESP(player)
-    if player == localPlayer then return end
-    if drawings[player] then return end
-
-    drawings[player] = {
-        Box = Drawing.new("Square"),
-        Tracer = Drawing.new("Line"),
-        Name = Drawing.new("Text"),
-        HPBar = Drawing.new("Square"),
-        HPBG = Drawing.new("Square")
+    local objects = {
+        Box = createDrawing("Square", {Thickness = 1, Color = Color3.fromRGB(0, 255, 0), Filled = false, Visible = false}),
+        Health = createDrawing("Square", {Thickness = 1, Filled = true, Color = Color3.fromRGB(0, 255, 0), Visible = false}),
+        HealthBG = createDrawing("Square", {Thickness = 1, Filled = true, Color = Color3.fromRGB(40, 40, 40), Visible = false}),
+        Distance = createDrawing("Text", {Size = 16, Center = true, Outline = true, Color = Color3.fromRGB(255,255,255), Visible = false}),
+        Tracer = createDrawing("Line", {Thickness = 1, Color = Color3.fromRGB(255, 255, 255), Visible = false}),
+        Role = createDrawing("Text", {Size = 14, Center = true, Outline = true, Color = Color3.fromRGB(255,255,0), Visible = false})
     }
-
-    for _,obj in pairs(drawings[player]) do
-        obj.Visible = false
-        obj.ZIndex = 1
-    end
-
-    drawings[player].Name.Center = true
-    drawings[player].Name.Size = 13
-    drawings[player].Name.Outline = true
+    espObjects[player] = objects
 end
 
 local function removeESP(player)
-    if drawings[player] then
-        for _,obj in pairs(drawings[player]) do
+    if espObjects[player] then
+        for _, obj in pairs(espObjects[player]) do
             obj:Remove()
         end
-        drawings[player] = nil
+        espObjects[player] = nil
     end
 end
 
-players.PlayerAdded:Connect(createESP)
-players.PlayerRemoving:Connect(removeESP)
-for _,p in pairs(players:GetPlayers()) do createESP(p) end
+-- ========= ESP ДЛЯ ПРЕДМЕТОВ =========
+local function addItemESP(item)
+    if itemESP[item] then return end
+    local text = createDrawing("Text", {Size = 16, Center = true, Outline = true, Color = Color3.fromRGB(0,150,255), Visible = false, Text = "Gun"})
+    itemESP[item] = text
+end
 
-runService.RenderStepped:Connect(function()
-    for player,objs in pairs(drawings) do
-        local char = player.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if ESPSettings.Enabled and hrp and hum and hum.Health>0 then
-            local pos,vis = camera:WorldToViewportPoint(hrp.Position)
-            local dist = (localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and (hrp.Position - localPlayer.Character.HumanoidRootPart.Position).magnitude) or 0
-            if vis and dist <= ESPSettings.MaxDistance then
-                local scale = math.clamp(1000/dist,2,5)
-                local size = Vector2.new(35*scale,50*scale)
-                local topLeft = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
+local function removeItemESP(item)
+    if itemESP[item] then
+        itemESP[item]:Remove()
+        itemESP[item] = nil
+    end
+end
+
+-- ========= РЕНДЕР =========
+RunService.RenderStepped:Connect(function()
+    -- Если ESP выключен — скрыть всё
+    if not ESP_ENABLED then
+        for _, objects in pairs(espObjects) do
+            for _, obj in pairs(objects) do
+                obj.Visible = false
+            end
+        end
+        for _, obj in pairs(itemESP) do
+            obj.Visible = false
+        end
+        return
+    end
+
+    -- Игроки
+    for player, objects in pairs(espObjects) do
+        local character = player.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if hrp and humanoid and humanoid.Health > 0 then
+            local pos, vis = Camera:WorldToViewportPoint(hrp.Position)
+            if vis then
+                local scale = 2000 / (pos.Z)
+                local width = 2 * scale
+                local height = 3 * scale
+                local x = pos.X - width / 2
+                local y = pos.Y - height / 2
 
                 -- Box
-                objs.Box.Visible = ESPSettings.ShowBox
-                if objs.Box.Visible then
-                    objs.Box.Position = topLeft
-                    objs.Box.Size = size
-                    objs.Box.Color = ESPSettings.Colors.Box
-                    objs.Box.Thickness = 1
+                objects.Box.Visible = SHOW_BOX
+                if SHOW_BOX then
+                    objects.Box.Size = Vector2.new(width, height)
+                    objects.Box.Position = Vector2.new(x, y)
                 end
 
-                -- HP
-                objs.HPBar.Visible = ESPSettings.ShowHealth
-                objs.HPBG.Visible = ESPSettings.ShowHealth
-                if ESPSettings.ShowHealth then
-                    local hpPercent = hum.Health/hum.MaxHealth
-                    local barHeight = size.Y * hpPercent
-                    objs.HPBG.Position = Vector2.new(topLeft.X - 6, topLeft.Y)
-                    objs.HPBG.Size = Vector2.new(4, size.Y)
-                    objs.HPBG.Color = Color3.fromRGB(50,50,50)
+                -- Health
+                objects.Health.Visible = SHOW_HEALTH
+                objects.HealthBG.Visible = SHOW_HEALTH
+                if SHOW_HEALTH then
+                    local ratio = humanoid.Health / humanoid.MaxHealth
+                    objects.HealthBG.Position = Vector2.new(x - 6, y)
+                    objects.HealthBG.Size = Vector2.new(4, height)
 
-                    objs.HPBar.Position = Vector2.new(topLeft.X - 6, topLeft.Y + (size.Y - barHeight))
-                    objs.HPBar.Size = Vector2.new(4, barHeight)
-                    objs.HPBar.Color = ESPSettings.GradientHealth
-                        and LerpColor(ESPSettings.Colors.HPGradEnd, ESPSettings.Colors.HPGradStart, hpPercent)
-                        or ESPSettings.Colors.HP
+                    objects.Health.Position = Vector2.new(x - 6, y + height * (1 - ratio))
+                    objects.Health.Size = Vector2.new(4, height * ratio)
+
+                    if SHOW_GRADIENT_HEALTH then
+                        objects.Health.Color = lerpColor(Color3.fromRGB(255,0,0), Color3.fromRGB(0,255,0), ratio)
+                    else
+                        objects.Health.Color = Color3.fromRGB(0,255,0)
+                    end
                 end
 
                 -- Distance
-                objs.Name.Visible = ESPSettings.ShowDistance
-                if ESPSettings.ShowDistance then
-                    objs.Name.Text = string.format("[%dm]", math.floor(dist))
-                    objs.Name.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 12)
-                    objs.Name.Color = ESPSettings.Colors.Distance
+                objects.Distance.Visible = SHOW_DISTANCE
+                if SHOW_DISTANCE then
+                    local dist = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
+                        and (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                        or 0
+                    objects.Distance.Position = Vector2.new(pos.X, y + height + 15)
+                    objects.Distance.Text = string.format("[%dm]", math.floor(dist))
                 end
 
-                -- Tracers
-                objs.Tracer.Visible = ESPSettings.ShowTracers
-                if ESPSettings.ShowTracers then
-                    objs.Tracer.From = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
-                    objs.Tracer.To = Vector2.new(pos.X, pos.Y)
-                    objs.Tracer.Color = ESPSettings.Colors.Tracer
-                    objs.Tracer.Thickness = 1
+                -- Tracer
+                objects.Tracer.Visible = SHOW_TRACERS
+                if SHOW_TRACERS then
+                    objects.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    objects.Tracer.To = Vector2.new(pos.X, pos.Y)
                 end
+
+                -- Role (Sheriff / Hero / Murderer check через Tools)
+                objects.Role.Visible = true
+                if character:FindFirstChild("Knife") then
+                    objects.Role.Text = "[Murderer]"
+                    objects.Role.Color = Color3.fromRGB(255,0,0)
+                elseif character:FindFirstChild("Revolver") then
+                    objects.Role.Text = "[Sheriff]"
+                    objects.Role.Color = Color3.fromRGB(0,150,255)
+                elseif character:FindFirstChild("GunDrop") then
+                    objects.Role.Text = "[Hero]"
+                    objects.Role.Color = Color3.fromRGB(0,255,0)
+                else
+                    objects.Role.Text = "[Innocent]"
+                    objects.Role.Color = Color3.fromRGB(255,255,255)
+                end
+                objects.Role.Position = Vector2.new(pos.X, y - 15)
 
             else
-                for _,o in pairs(objs) do o.Visible=false end
+                for _, obj in pairs(objects) do
+                    obj.Visible = false
+                end
             end
         else
-            for _,o in pairs(objs) do o.Visible=false end
+            for _, obj in pairs(objects) do
+                obj.Visible = false
+            end
+        end
+    end
+
+    -- Оружие на земле
+    for item, text in pairs(itemESP) do
+        if item and item.Parent then
+            local pos, vis = Camera:WorldToViewportPoint(item.Position)
+            if vis and SHOW_WEAPON then
+                text.Position = Vector2.new(pos.X, pos.Y)
+                text.Visible = true
+            else
+                text.Visible = false
+            end
+        else
+            removeItemESP(item)
         end
     end
 end)
+
+-- Подключение к игрокам
+for _, p in ipairs(Players:GetPlayers()) do
+    addESP(p)
+end
+Players.PlayerAdded:Connect(addESP)
+Players.PlayerRemoving:Connect(removeESP)
+
+-- Подключение к оружию
+workspace.DescendantAdded:Connect(function(obj)
+    if obj.Name == "GunDrop" then
+        addItemESP(obj)
+    end
+end)
+workspace.DescendantRemoving:Connect(function(obj)
+    if itemESP[obj] then
+        removeItemESP(obj)
+    end
+end)
+
+-- ========== МЕНЮ OrionLib ==========
+local Window = OrionLib:MakeWindow({Name = "ESP Menu", HidePremium = false, SaveConfig = false, IntroEnabled = false})
+local Tab = Window:MakeTab({Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+
+Tab:AddToggle({Name = "Включить ESP", Default = ESP_ENABLED, Callback = function(v) ESP_ENABLED = v end})
+Tab:AddToggle({Name = "Боксы", Default = SHOW_BOX, Callback = function(v) SHOW_BOX = v end})
+Tab:AddToggle({Name = "HP бар", Default = SHOW_HEALTH, Callback = function(v) SHOW_HEALTH = v end})
+Tab:AddToggle({Name = "Градиент HP", Default = SHOW_GRADIENT_HEALTH, Callback = function(v) SHOW_GRADIENT_HEALTH = v end})
+Tab:AddToggle({Name = "Дистанция", Default = SHOW_DISTANCE, Callback = function(v) SHOW_DISTANCE = v end})
+Tab:AddToggle({Name = "Трейсеры", Default = SHOW_TRACERS, Callback = function(v) SHOW_TRACERS = v end})
+Tab:AddToggle({Name = "ESP оружия", Default = SHOW_WEAPON, Callback = function(v) SHOW_WEAPON = v end})
+
+OrionLib:Init()
