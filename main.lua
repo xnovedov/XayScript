@@ -3998,7 +3998,7 @@ _G.Rayfield = Rayfield
 
 -- меню
 
-local RayfieldLibrary = RayfieldLibrary -- после вставки source.lua объект уже будет доступен
+local Rayfield = _G.Rayfield -- после вставки source.lua объект уже будет доступен
 
 local Window = Rayfield:CreateWindow({
    Name = "Debug Menu",
