@@ -105,13 +105,23 @@ RunService.Heartbeat:Connect(function(dt)
                 objects.Health.Visible = SHOW_HEALTH
                 objects.HealthBG.Visible = SHOW_HEALTH
                 if SHOW_HEALTH then
-                    local ratio = humanoid.Health / humanoid.MaxHealth
-                    objects.HealthBG.Position = Vector2.new(x - 6, y)
-                    objects.HealthBG.Size = Vector2.new(4, height)
-                    objects.Health.Position = Vector2.new(x - 6, y + height * (1 - ratio))
-                    objects.Health.Size = Vector2.new(4, height * ratio)
-                    objects.Health.Color = SHOW_GRADIENT_HEALTH and lerpColor(HPGradStart, HPGradEnd, ratio) or HPColor
-                end
+        local ratio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+
+        -- фон
+        objects.HealthBG.Position = Vector2.new(x - 6, y)
+        objects.HealthBG.Size = Vector2.new(4, height)
+
+        -- сам бар
+        local hpHeight = height * ratio
+        objects.Health.Position = Vector2.new(x - 6, y + (height - hpHeight))
+        objects.Health.Size = Vector2.new(4, hpHeight)
+
+        if SHOW_GRADIENT_HEALTH then
+            objects.Health.Color = lerpColor(HPGradStart, HPGradEnd, ratio)
+        else
+            objects.Health.Color = HPColor
+        end
+    end
 
                 objects.Tracer.Visible = SHOW_TRACERS
                 if SHOW_TRACERS then
