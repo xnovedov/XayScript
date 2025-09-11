@@ -9,7 +9,6 @@
 	Damian | Programming
 
 ]]
-
 if debugX then
 	warn('Initialising Rayfield')
 end
@@ -4000,7 +3999,7 @@ return RayfieldLibrary
 
 -- меню
 
-local Rayfield = Rayfield -- после вставки source.lua объект уже будет доступен
+local RayfieldLibrary = RayfieldLibrary -- после вставки source.lua объект уже будет доступен
 
 local Window = Rayfield:CreateWindow({
    Name = "Debug Menu",
