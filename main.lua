@@ -3999,7 +3999,6 @@ return RayfieldLibrary
 
 
 -- меню
-debugX = true
 
 local Rayfield = Rayfield -- после вставки source.lua объект уже будет доступен
 
