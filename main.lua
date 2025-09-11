@@ -1,4 +1,4 @@
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/source.lua"))()
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
 local ESP_ENABLED = false
 local SHOW_BOX = false
@@ -7,6 +7,8 @@ local SHOW_GRADIENT_HEALTH = false
 local SHOW_DISTANCE = false
 local SHOW_TRACERS = false
 local SHOW_WEAPON = false
+local SHOW_NAME = false
+local SHOW_ROLE = false
 
 local BoxColor = Color3.fromRGB(0, 255, 0)
 local HPColor = Color3.fromRGB(0, 255, 0)
@@ -15,6 +17,8 @@ local HPGradEnd = Color3.fromRGB(0, 255, 0)
 local TracerColor = Color3.fromRGB(255, 255, 255)
 local DistColor = Color3.fromRGB(255, 255, 255)
 local WeaponColor = Color3.fromRGB(0,150,255)
+local NameColor = Color3.fromRGB(255,255,255)
+local RoleColor = Color3.fromRGB(200,200,50)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -41,6 +45,8 @@ local function addESP(player)
         HealthBG = createDrawing("Square", {Thickness = 1, Filled = true, Color = Color3.fromRGB(40, 40, 40), Visible = false}),
         Distance = createDrawing("Text", {Size = 16, Center = true, Outline = true, Visible = false}),
         Tracer = createDrawing("Line", {Thickness = 1, Visible = false}),
+        Name = createDrawing("Text", {Size = 16, Center = true, Outline = true, Visible = false}),
+        Role = createDrawing("Text", {Size = 14, Center = true, Outline = true, Visible = false}),
     }
     espObjects[player] = objects
 end
@@ -113,6 +119,19 @@ RunService.RenderStepped:Connect(function()
                     objects.Tracer.To = Vector2.new(pos.X, pos.Y)
                     objects.Tracer.Color = TracerColor
                 end
+                objects.Name.Visible = SHOW_NAME
+                if SHOW_NAME then
+                    objects.Name.Position = Vector2.new(pos.X, y - 15)
+                    objects.Name.Text = player.Name
+                    objects.Name.Color = NameColor
+                end
+                objects.Role.Visible = SHOW_ROLE
+                if SHOW_ROLE then
+                    local role = player.Team and player.Team.Name or "No Team"
+                    objects.Role.Position = Vector2.new(pos.X, y - 30)
+                    objects.Role.Text = "["..role.."]"
+                    objects.Role.Color = RoleColor
+                end
             else
                 for _, obj in pairs(objects) do obj.Visible = false end
             end
@@ -158,6 +177,10 @@ Tab:AddToggle({Name = "Дистанция", Default = SHOW_DISTANCE, Callback = 
 Tab:AddColorpicker({Name = "Цвет дистанции", Default = DistColor, Callback = function(c) DistColor = c end})
 Tab:AddToggle({Name = "Трейсеры", Default = SHOW_TRACERS, Callback = function(v) SHOW_TRACERS = v end})
 Tab:AddColorpicker({Name = "Цвет трейсеров", Default = TracerColor, Callback = function(c) TracerColor = c end})
+Tab:AddToggle({Name = "Ники", Default = SHOW_NAME, Callback = function(v) SHOW_NAME = v end})
+Tab:AddColorpicker({Name = "Цвет ников", Default = NameColor, Callback = function(c) NameColor = c end})
+Tab:AddToggle({Name = "Роли", Default = SHOW_ROLE, Callback = function(v) SHOW_ROLE = v end})
+Tab:AddColorpicker({Name = "Цвет ролей", Default = RoleColor, Callback = function(c) RoleColor = c end})
 Tab:AddToggle({Name = "ESP оружия", Default = SHOW_WEAPON, Callback = function(v) SHOW_WEAPON = v end})
 Tab:AddColorpicker({Name = "Цвет оружия", Default = WeaponColor, Callback = function(c) WeaponColor = c end})
 
