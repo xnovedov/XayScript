@@ -1,12 +1,12 @@
 local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/source.lua"))()
 
-local ESP_ENABLED = true
-local SHOW_BOX = true
-local SHOW_HEALTH = true
-local SHOW_DISTANCE = true
-local SHOW_TRACERS = true
-local SHOW_NAME = true
-local SHOW_ROLE = true
+local ESP_ENABLED = false
+local SHOW_BOX = false
+local SHOW_HEALTH = false
+local SHOW_DISTANCE = false
+local SHOW_TRACERS = false
+local SHOW_NAME = false
+local SHOW_ROLE = false
 local MAX_DISTANCE = 2000
 
 local BoxColor = Color3.fromRGB(0, 255, 0)
