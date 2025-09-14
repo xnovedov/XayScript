@@ -1,12 +1,14 @@
+-- Подключаем OrionLib
 local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/xnovedov/XayScript/refs/heads/main/source.lua"))()
 
-local ESP_ENABLED = false
-local SHOW_BOX = false
-local SHOW_HEALTH = false
-local SHOW_DISTANCE = false
-local SHOW_TRACERS = false
-local SHOW_NAME = false
-local SHOW_ROLE = false
+-- ========== КОНФИГ ==========
+local ESP_ENABLED = true
+local SHOW_BOX = true
+local SHOW_HEALTH = true
+local SHOW_DISTANCE = true
+local SHOW_TRACERS = true
+local SHOW_NAME = true
+local SHOW_ROLE = true
 local MAX_DISTANCE = 2000
 
 local BoxColor = Color3.fromRGB(0, 255, 0)
@@ -23,6 +25,7 @@ local ConfigList = {}
 if not isfolder("XayScript") then makefolder("XayScript") end
 if not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
 
+-- ========== CFG СИСТЕМА ==========
 local HttpService = game:GetService("HttpService")
 
 local function saveCFG(name)
@@ -64,6 +67,24 @@ local function loadCFG(name)
     TracerColor = Color3.new(unpack(data.TracerColor))
     NameColor = Color3.new(unpack(data.NameColor))
     RoleColor = Color3.new(unpack(data.RoleColor))
+
+    -- Синхронизация с UI
+    if UIRefs.ToggleESP then UIRefs.ToggleESP:Set(ESP_ENABLED) end
+    if UIRefs.ToggleBox then UIRefs.ToggleBox:Set(SHOW_BOX) end
+    if UIRefs.ToggleHP then UIRefs.ToggleHP:Set(SHOW_HEALTH) end
+    if UIRefs.ToggleDist then UIRefs.ToggleDist:Set(SHOW_DISTANCE) end
+    if UIRefs.ToggleTracers then UIRefs.ToggleTracers:Set(SHOW_TRACERS) end
+    if UIRefs.ToggleName then UIRefs.ToggleName:Set(SHOW_NAME) end
+    if UIRefs.ToggleRole then UIRefs.ToggleRole:Set(SHOW_ROLE) end
+
+    if UIRefs.SliderDist then UIRefs.SliderDist:Set(MAX_DISTANCE) end
+
+    if UIRefs.ColorBox then UIRefs.ColorBox:Set(BoxColor) end
+    if UIRefs.ColorHP then UIRefs.ColorHP:Set(HPColor) end
+    if UIRefs.ColorTracer then UIRefs.ColorTracer:Set(TracerColor) end
+    if UIRefs.ColorDist then UIRefs.ColorDist:Set(DistColor) end
+    if UIRefs.ColorName then UIRefs.ColorName:Set(NameColor) end
+    if UIRefs.ColorRole then UIRefs.ColorRole:Set(RoleColor) end
 end
 
 local function refreshCFGs(dropdown)
@@ -75,6 +96,7 @@ local function refreshCFGs(dropdown)
     if dropdown then dropdown:Refresh(ConfigList, CurrentCFGName) end
 end
 
+-- ========== ESP ==========
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -110,65 +132,64 @@ game:GetService("RunService").RenderStepped:Connect(function()
         for _, objects in pairs(espObjects) do
             for _, obj in pairs(objects) do obj.Visible = false end
         end
-    else
-        for player, objects in pairs(espObjects) do
-            local character = player.Character
-            local hrp = character and character:FindFirstChild("HumanoidRootPart")
-            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-            if hrp and humanoid and humanoid.Health > 0 then
-                local pos, vis = Camera:WorldToViewportPoint(hrp.Position)
-                if vis then
-                    local dist = (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-                    if dist <= MAX_DISTANCE then
-                        local scale = 2000 / (pos.Z)
-                        local width = 2 * scale
-                        local height = 3 * scale
-                        local x = pos.X - width / 2
-                        local y = pos.Y - height / 2
+        return
+    end
 
-                        objects.Box.Visible = SHOW_BOX
-                        if SHOW_BOX then
-                            objects.Box.Size = Vector2.new(width, height)
-                            objects.Box.Position = Vector2.new(x, y)
-                            objects.Box.Color = BoxColor
-                        end
+    for player, objects in pairs(espObjects) do
+        local character = player.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if hrp and humanoid and humanoid.Health > 0 then
+            local pos, vis = Camera:WorldToViewportPoint(hrp.Position)
+            if vis then
+                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                if dist <= MAX_DISTANCE then
+                    local scale = 2000 / (pos.Z)
+                    local width = 2 * scale
+                    local height = 3 * scale
+                    local x = pos.X - width / 2
+                    local y = pos.Y - height / 2
 
-                        objects.Distance.Visible = SHOW_DISTANCE
-                        if SHOW_DISTANCE then
-                            objects.Distance.Position = Vector2.new(pos.X, y + height + 15)
-                            objects.Distance.Text = string.format("[%dm]", math.floor(dist))
-                            objects.Distance.Color = DistColor
-                        end
+                    objects.Box.Visible = SHOW_BOX
+                    if SHOW_BOX then
+                        objects.Box.Size = Vector2.new(width, height)
+                        objects.Box.Position = Vector2.new(x, y)
+                        objects.Box.Color = BoxColor
+                    end
 
-                        objects.HPText.Visible = SHOW_HEALTH
-                        if SHOW_HEALTH then
-                            objects.HPText.Position = Vector2.new(pos.X, y + height + 30)
-                            objects.HPText.Text = string.format("HP: %d/%d", math.floor(humanoid.Health), math.floor(humanoid.MaxHealth))
-                            objects.HPText.Color = HPColor
-                        end
+                    objects.Distance.Visible = SHOW_DISTANCE
+                    if SHOW_DISTANCE then
+                        objects.Distance.Position = Vector2.new(pos.X, y + height + 15)
+                        objects.Distance.Text = string.format("[%dm]", math.floor(dist))
+                        objects.Distance.Color = DistColor
+                    end
 
-                        objects.Tracer.Visible = SHOW_TRACERS
-                        if SHOW_TRACERS then
-                            objects.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                            objects.Tracer.To = Vector2.new(pos.X, pos.Y)
-                            objects.Tracer.Color = TracerColor
-                        end
+                    objects.HPText.Visible = SHOW_HEALTH
+                    if SHOW_HEALTH then
+                        objects.HPText.Position = Vector2.new(pos.X, y + height + 30)
+                        objects.HPText.Text = string.format("HP: %d/%d", math.floor(humanoid.Health), math.floor(humanoid.MaxHealth))
+                        objects.HPText.Color = HPColor
+                    end
 
-                        objects.Name.Visible = SHOW_NAME
-                        if SHOW_NAME then
-                            objects.Name.Position = Vector2.new(pos.X, y - 15)
-                            objects.Name.Text = player.Name
-                            objects.Name.Color = NameColor
-                        end
+                    objects.Tracer.Visible = SHOW_TRACERS
+                    if SHOW_TRACERS then
+                        objects.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        objects.Tracer.To = Vector2.new(pos.X, pos.Y)
+                        objects.Tracer.Color = TracerColor
+                    end
 
-                        objects.Role.Visible = SHOW_ROLE
-                        if SHOW_ROLE then
-                            objects.Role.Position = Vector2.new(pos.X, y - 30)
-                            objects.Role.Text = player.Team and player.Team.Name or "[No Team]"
-                            objects.Role.Color = RoleColor
-                        end
-                    else
-                        for _, obj in pairs(objects) do obj.Visible = false end
+                    objects.Name.Visible = SHOW_NAME
+                    if SHOW_NAME then
+                        objects.Name.Position = Vector2.new(pos.X, y - 15)
+                        objects.Name.Text = player.Name
+                        objects.Name.Color = NameColor
+                    end
+
+                    objects.Role.Visible = SHOW_ROLE
+                    if SHOW_ROLE then
+                        objects.Role.Position = Vector2.new(pos.X, y - 30)
+                        objects.Role.Text = player.Team and player.Team.Name or "[No Team]"
+                        objects.Role.Color = RoleColor
                     end
                 else
                     for _, obj in pairs(objects) do obj.Visible = false end
@@ -176,6 +197,8 @@ game:GetService("RunService").RenderStepped:Connect(function()
             else
                 for _, obj in pairs(objects) do obj.Visible = false end
             end
+        else
+            for _, obj in pairs(objects) do obj.Visible = false end
         end
     end
 end)
@@ -184,19 +207,14 @@ for _, p in ipairs(Players:GetPlayers()) do addESP(p) end
 Players.PlayerAdded:Connect(addESP)
 Players.PlayerRemoving:Connect(removeESP)
 
+-- ========== UI ==========
 UIRefs = {}
 
 local Window = OrionLib:MakeWindow({Name = "XayScript Universal", HidePremium = true, SaveConfig = false, IntroEnabled = true})
 
 local MainTab = Window:MakeTab({Name = "Main", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 MainTab:AddParagraph("⚠️ Рекомендация / Recommendation",
-"РУС: понижайте графику и дистанцию ESP. Большое скопление игроков с функциями текста (например дистанция или роль) вызывает лаги.\n\nENG: Lower graphics and ESP distance. Many players with text features (like distance or role) cause heavy lag.")
-
-MainTab:AddParagraph("About XNTeam", "Developers: Xayori, Nyx, moderx3 (XNTeam)\nVersion: 1.0.1\nTelegram: @XayNovTeam")
-MainTab:AddParagraph("Changelog v1.0.1", [[
-- Aimbot: была попытка зафиксить, но в итоге был удален
-- Добавили чейнджлоги и О нас
-]])
+"РУС: понижайте графику и дистанцию ESP. Большое скопление игроков с функциями текста (например дистанция или роль) вызывает лаги. А также вызывают лаги множественные инжекты скрипта.\n\nENG: Lower graphics and ESP distance. Many players with text features (like distance or role) cause heavy lag. Multiple script injections also cause lags.")
 
 local ESP = Window:MakeTab({Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 
@@ -220,37 +238,17 @@ UIRefs.ColorName = ESP:AddColorpicker({Name = "Цвет ников", Default = N
 UIRefs.ToggleRole = ESP:AddToggle({Name = "Роли", Default = SHOW_ROLE, Callback = function(v) SHOW_ROLE = v end})
 UIRefs.ColorRole = ESP:AddColorpicker({Name = "Цвет ролей", Default = RoleColor, Callback = function(c) RoleColor = c end})
 
-local AimbotTab = Window:MakeTab({Name = "Aimbot", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-UIRefs.ToggleAimbot = AimbotTab:AddToggle({
-    Name = "Включить Aimbot",
-    Default = AIMBOT_ENABLED,
-    Callback = function(v)
-        AIMBOT_ENABLED = v
-        -- сохраняем сразу, чтобы состояние не терялось
-        saveCFG(CurrentCFGName)
-    end
-})
-AimbotTab:AddSlider({Name = "Smooth", Min = 1, Max = 20, Default = AIMBOT_SMOOTH, Increment = 1, Callback = function(v) AIMBOT_SMOOTH = v end})
-AimbotTab:AddSlider({Name = "FOV", Min = 50, Max = 1000, Default = AIMBOT_FOV, Increment = 10, Callback = function(v) AIMBOT_FOV = v end})
-AimbotTab:AddToggle({Name = "Использовать FOV", Default = AIMBOT_USE_FOV, Callback = function(v) AIMBOT_USE_FOV = v end})
-AimbotTab:AddDropdown({Name = "Режим", Default = AIMBOT_MODE, Options = {"Mouse", "Camera"}, Callback = function(v) AIMBOT_MODE = v end})
-AimbotTab:AddTextbox({Name = "Hitboxes через ,", Default = table.concat(AIMBOT_HITBOXES, ","), TextDisappear = false, Callback = function(v)
-    AIMBOT_HITBOXES = {}
-    for hit in string.gmatch(v, "[^,%s]+") do table.insert(AIMBOT_HITBOXES, hit) end
-end})
-
 local Configs = Window:MakeTab({Name = "Configs", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 Configs:AddTextbox({Name = "Config name", Default = "default", TextDisappear = false, Callback = function(value) CurrentCFGName = value end})
 local DropdownCFG = Configs:AddDropdown({Name = "Select config", Default = "default", Options = ConfigList, Callback = function(value) loadCFG(value) end})
 
-Configs:AddButton({Name = "Save", Callback = function() saveCFG(CurrentCFGName) refreshCFGs(DropdownCFG) end})
-Configs:AddButton({Name = "Refresh", Callback = function() refreshCFGs(DropdownCFG) end})
+Configs:AddButton({Name = "💾 Save", Callback = function() saveCFG(CurrentCFGName) refreshCFGs(DropdownCFG) end})
+Configs:AddButton({Name = "🔄 Refresh", Callback = function() refreshCFGs(DropdownCFG) end})
 
 local About = Window:MakeTab({Name = "About", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-About:AddLabel("Version 1.0.1 | Deleted Aim")
+About:AddLabel("Version 0.9 | Optimized with CFG")
 About:AddLabel("Developer: XayoriNovedov")
 About:AddLabel("t.me/XayNovTeam")
-About:AddLabel("Developers: Xayori, Nyx, moderx3 (XNTeam)")
-
+a
 refreshCFGs(DropdownCFG)
 OrionLib:Init()
