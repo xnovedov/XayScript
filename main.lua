@@ -9,14 +9,6 @@ local SHOW_NAME = false
 local SHOW_ROLE = false
 local MAX_DISTANCE = 2000
 
-local AIMBOT_ENABLED = false
-local AIMBOT_SMOOTH = 5
-local AIMBOT_FOV = 200
-local AIMBOT_USE_FOV = false
-local AIMBOT_MODE = "Mouse"
-local AIMBOT_KEY = Enum.UserInputType.MouseButton2
-local AIMBOT_HITBOXES = {"Head"}
-
 local BoxColor = Color3.fromRGB(0, 255, 0)
 local HPColor = Color3.fromRGB(255, 0, 0)
 local DistColor = Color3.fromRGB(255, 255, 255)
@@ -43,13 +35,6 @@ local function saveCFG(name)
         SHOW_NAME = SHOW_NAME,
         SHOW_ROLE = SHOW_ROLE,
         MAX_DISTANCE = MAX_DISTANCE,
-        AIMBOT_ENABLED = AIMBOT_ENABLED,
-        AIMBOT_SMOOTH = AIMBOT_SMOOTH,
-        AIMBOT_FOV = AIMBOT_FOV,
-        AIMBOT_USE_FOV = AIMBOT_USE_FOV,
-        AIMBOT_MODE = AIMBOT_MODE,
-        AIMBOT_KEY = AIMBOT_KEY.Name,
-        AIMBOT_HITBOXES = AIMBOT_HITBOXES,
         BoxColor = {BoxColor.R, BoxColor.G, BoxColor.B},
         HPColor = {HPColor.R, HPColor.G, HPColor.B},
         DistColor = {DistColor.R, DistColor.G, DistColor.B},
@@ -73,13 +58,6 @@ local function loadCFG(name)
     SHOW_NAME = data.SHOW_NAME
     SHOW_ROLE = data.SHOW_ROLE
     MAX_DISTANCE = data.MAX_DISTANCE
-    AIMBOT_ENABLED = data.AIMBOT_ENABLED
-    AIMBOT_SMOOTH = data.AIMBOT_SMOOTH
-    AIMBOT_FOV = data.AIMBOT_FOV
-    AIMBOT_USE_FOV = data.AIMBOT_USE_FOV
-    AIMBOT_MODE = data.AIMBOT_MODE
-    AIMBOT_KEY = Enum.UserInputType[data.AIMBOT_KEY] or Enum.UserInputType.MouseButton2
-    AIMBOT_HITBOXES = data.AIMBOT_HITBOXES
     BoxColor = Color3.new(unpack(data.BoxColor))
     HPColor = Color3.new(unpack(data.HPColor))
     DistColor = Color3.new(unpack(data.DistColor))
@@ -200,59 +178,11 @@ game:GetService("RunService").RenderStepped:Connect(function()
             end
         end
     end
-
-    if AIMBOT_ENABLED then
-        local closest, targetPart, shortest = nil, nil, math.huge
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid and humanoid.Health > 0 then
-                    for _, partName in ipairs(AIMBOT_HITBOXES) do
-                        local part = player.Character:FindFirstChild(partName)
-                        if part then
-                            local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
-                            if onScreen then
-                                local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
-                                if (not AIMBOT_USE_FOV or dist <= AIMBOT_FOV) and dist < shortest then
-                                    closest, targetPart, shortest = player, part, dist
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        if closest and targetPart then
-            local targetPos = targetPart.Position
-            if AIMBOT_MODE == "Mouse" then
-                local mousePos = UserInputService:GetMouseLocation()
-                local targetScreen = Camera:WorldToViewportPoint(targetPos)
-                local move = (Vector2.new(targetScreen.X, targetScreen.Y) - mousePos) / AIMBOT_SMOOTH
-                mousemoverel(move.X, move.Y)
-            elseif AIMBOT_MODE == "Camera" then
-                local direction = (targetPos - Camera.CFrame.Position).Unit
-                local newCFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + direction)
-                Camera.CFrame = Camera.CFrame:Lerp(newCFrame, 1/AIMBOT_SMOOTH)
-            end
-        end
-    end
 end)
 
 for _, p in ipairs(Players:GetPlayers()) do addESP(p) end
 Players.PlayerAdded:Connect(addESP)
 Players.PlayerRemoving:Connect(removeESP)
-
-local UserInputService = game:GetService("UserInputService")
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if not gpe and input.UserInputType == AIMBOT_KEY then
-        AIMBOT_ENABLED = true
-    end
-end)
-UserInputService.InputEnded:Connect(function(input, gpe)
-    if not gpe and input.UserInputType == AIMBOT_KEY then
-        AIMBOT_ENABLED = false
-    end
-end)
 
 UIRefs = {}
 
@@ -261,8 +191,12 @@ local Window = OrionLib:MakeWindow({Name = "XayScript Universal", HidePremium = 
 local MainTab = Window:MakeTab({Name = "Main", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 MainTab:AddParagraph("⚠️ Рекомендация / Recommendation",
 "РУС: понижайте графику и дистанцию ESP. Большое скопление игроков с функциями текста (например дистанция или роль) вызывает лаги.\n\nENG: Lower graphics and ESP distance. Many players with text features (like distance or role) cause heavy lag.")
-MainTab:AddParagraph("AimBot / АимБот",
-"На данный момент Аимбот не робит.\n\nENG: At the moment, the aimbot is not working.")
+
+MainTab:AddParagraph("About XNTeam", "Developers: Xayori, Nyx, moderx3 (XNTeam)\nVersion: 1.0.1\nTelegram: @XayNovTeam")
+MainTab:AddParagraph("Changelog v1.0.1", [[
+- Aimbot: была попытка зафиксить, но в итоге был удален
+- Добавили чейнджлоги и О нас
+]])
 
 local ESP = Window:MakeTab({Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 
@@ -287,7 +221,15 @@ UIRefs.ToggleRole = ESP:AddToggle({Name = "Роли", Default = SHOW_ROLE, Callb
 UIRefs.ColorRole = ESP:AddColorpicker({Name = "Цвет ролей", Default = RoleColor, Callback = function(c) RoleColor = c end})
 
 local AimbotTab = Window:MakeTab({Name = "Aimbot", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-AimbotTab:AddToggle({Name = "Включить Aimbot", Default = AIMBOT_ENABLED, Callback = function(v) AIMBOT_ENABLED = v end})
+UIRefs.ToggleAimbot = AimbotTab:AddToggle({
+    Name = "Включить Aimbot",
+    Default = AIMBOT_ENABLED,
+    Callback = function(v)
+        AIMBOT_ENABLED = v
+        -- сохраняем сразу, чтобы состояние не терялось
+        saveCFG(CurrentCFGName)
+    end
+})
 AimbotTab:AddSlider({Name = "Smooth", Min = 1, Max = 20, Default = AIMBOT_SMOOTH, Increment = 1, Callback = function(v) AIMBOT_SMOOTH = v end})
 AimbotTab:AddSlider({Name = "FOV", Min = 50, Max = 1000, Default = AIMBOT_FOV, Increment = 10, Callback = function(v) AIMBOT_FOV = v end})
 AimbotTab:AddToggle({Name = "Использовать FOV", Default = AIMBOT_USE_FOV, Callback = function(v) AIMBOT_USE_FOV = v end})
@@ -301,13 +243,14 @@ local Configs = Window:MakeTab({Name = "Configs", Icon = "rbxassetid://448334599
 Configs:AddTextbox({Name = "Config name", Default = "default", TextDisappear = false, Callback = function(value) CurrentCFGName = value end})
 local DropdownCFG = Configs:AddDropdown({Name = "Select config", Default = "default", Options = ConfigList, Callback = function(value) loadCFG(value) end})
 
-Configs:AddButton({Name = "💾 Save", Callback = function() saveCFG(CurrentCFGName) refreshCFGs(DropdownCFG) end})
-Configs:AddButton({Name = "🔄 Refresh", Callback = function() refreshCFGs(DropdownCFG) end})
+Configs:AddButton({Name = "Save", Callback = function() saveCFG(CurrentCFGName) refreshCFGs(DropdownCFG) end})
+Configs:AddButton({Name = "Refresh", Callback = function() refreshCFGs(DropdownCFG) end})
 
 local About = Window:MakeTab({Name = "About", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-About:AddLabel("Version 0.9 | Optimized with CFG")
+About:AddLabel("Version 1.0.1 | Deleted Aim")
 About:AddLabel("Developer: XayoriNovedov")
 About:AddLabel("t.me/XayNovTeam")
+About:AddLabel("Developers: Xayori, Nyx, moderx3 (XNTeam)")
 
 refreshCFGs(DropdownCFG)
 OrionLib:Init()
